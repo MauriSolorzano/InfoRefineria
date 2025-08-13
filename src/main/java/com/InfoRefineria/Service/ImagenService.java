@@ -3,7 +3,6 @@ package com.InfoRefineria.Service;
 import com.InfoRefineria.Entity.Imagen;
 import com.InfoRefineria.Entity.Sector;
 import com.InfoRefineria.Repository.ImagenRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,8 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.nio.file.Files;
-import java.io.IOException;
 
 @Service
 public class ImagenService {
@@ -27,7 +24,7 @@ public class ImagenService {
         Files.createDirectories(directorioImagenes);
     }
 
-    public void guardarImagenes(MultipartFile archivo, String sectorStr) throws IOException {
+    public String guardarImagenes(MultipartFile archivo, String sectorStr) throws IOException {
         if (archivo.isEmpty()){
             throw new  IllegalArgumentException("El archivo no puede estar vacio");
         }
@@ -45,6 +42,7 @@ public class ImagenService {
         imagen.setSector(sector);
 
         imagenRepository.save(imagen);
+        return nombreArchivo;
     }
 
     public List<String> obtenerRutasPorSector(String sectorStr) {
@@ -93,6 +91,28 @@ public class ImagenService {
             throw new RuntimeException("Error al eliminar el archivo fisico: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("Error al eliminar la imagen: " + e.getMessage(), e);
+        }
+    }
+
+    public void deleteImageBySector(Sector sector){
+        try{
+            List<Imagen> imagenes = imagenRepository.findBySector(sector);
+
+            if (imagenes.isEmpty()){
+                throw new RuntimeException("No se encontraron imagenes en el sector: " + sector);
+            }
+
+            for (Imagen imagen : imagenes) {
+                try {
+                    Path rutaArchivo = Paths.get(imagen.getNombreArchivo());
+                    Files.deleteIfExists(rutaArchivo);
+                } catch (IOException e) {
+                    System.err.println("Error al eliminar archivo físico: " + imagen.getNombreArchivo());
+                }
+            }
+            imagenRepository.deleteBySector(sector);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al eliminar imagenes del sector: " + e.getMessage());
         }
     }
 
