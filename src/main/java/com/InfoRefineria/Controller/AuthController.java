@@ -12,7 +12,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:5500", allowCredentials = "true")
+//@CrossOrigin(origins = "http://localhost:5500", allowCredentials = "true")
 @RestController
 @RequestMapping("/api")
 public class AuthController {
