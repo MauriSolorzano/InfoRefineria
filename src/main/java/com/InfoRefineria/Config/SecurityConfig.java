@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/login.html", "/login.css", "/img/**", "/api/login",
-                            "/imagenes/**", "/Sector.html").permitAll();
+                            "/imagenes/**", "/Sector.html", "/api/**").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .exceptionHandling(ex -> ex
