@@ -16,6 +16,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -76,7 +78,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CookieSameSiteSupplier applicationCookieSameSiteSupplier() {
-        return CookieSameSiteSupplier.ofNone();
+    public CookieSerializer cookieSerializer() {
+        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
+        serializer.setSameSite("Lax"); // funciona en http sin problemas
+        serializer.setUseSecureCookie(false); // evita que se marque como Secure
+        return serializer;
     }
+
 }
