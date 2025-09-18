@@ -31,3 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
+info-refineria.tar
+mysql_8_0_33.tar
