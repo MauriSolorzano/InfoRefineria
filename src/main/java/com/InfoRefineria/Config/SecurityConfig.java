@@ -58,7 +58,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://10.0.0.50"); // Específico en lugar de wildcard
+        config.addAllowedOrigin("http://10.0.0.50");
+        config.addAllowedOrigin("http://localhost:8080");
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
 
