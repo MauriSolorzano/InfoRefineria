@@ -31,18 +31,12 @@ public class SecurityConfig {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/login.html", "/login.css", "/img/**", "/api/login",
                             "/imagenes/**", "/Sector.html", "/api/**").permitAll();
                     auth.anyRequest().authenticated();
                 })
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            response.getWriter().write("Unauthorized");
-                        })
-                )
                 .build();
     }
 
@@ -54,7 +48,7 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails user = User.withUsername("admin")
-                .password("{noop}1234") // sin codificar (solo para pruebas)
+                .password("{noop}1234")
                 .roles("ADMIN")
                 .build();
         return new InMemoryUserDetailsManager(user);
@@ -64,7 +58,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*");
+        config.addAllowedOrigin("http://10.0.0.50"); // Específico en lugar de wildcard
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
 
@@ -72,15 +66,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-    @Bean
-    public CookieSerializer cookieSerializer() {
-        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
-        serializer.setSameSite("Lax");
-        serializer.setUseSecureCookie(false);
-        serializer.setCookiePath("/"); // Asegurar que la cookie sea para todo el sitio
-        return serializer;
-    }
-
 }
 
