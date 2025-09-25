@@ -58,8 +58,8 @@ public class SecurityConfig {
     public ServletContextInitializer servletContextInitializer() {
         return servletContext -> {
             SessionCookieConfig sessionCookieConfig = servletContext.getSessionCookieConfig();
-            sessionCookieConfig.setHttpOnly(true);
             sessionCookieConfig.setSecure(false);  // IMPORTANTE: false para HTTP
+            sessionCookieConfig.setHttpOnly(true);
             sessionCookieConfig.setName("JSESSIONID");
             sessionCookieConfig.setPath("/");
         };
