@@ -69,19 +69,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Primary
-    public HttpSessionIdResolver httpSessionIdResolver() {
-        CookieHttpSessionIdResolver resolver = new CookieHttpSessionIdResolver();
-        DefaultCookieSerializer cookieSerializer = new DefaultCookieSerializer();
-        cookieSerializer.setCookieName("JSESSIONID");
-        cookieSerializer.setCookiePath("/");
-        cookieSerializer.setUseSecureCookie(false);
-        cookieSerializer.setSameSite("Lax");
-        resolver.setCookieSerializer(cookieSerializer);
-        return resolver;
-    }
-
-    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
