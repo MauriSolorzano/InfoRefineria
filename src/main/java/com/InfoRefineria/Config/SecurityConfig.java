@@ -4,6 +4,7 @@ import jakarta.servlet.SessionCookieConfig;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -15,6 +16,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.web.http.CookieHttpSessionIdResolver;
+import org.springframework.session.web.http.DefaultCookieSerializer;
+import org.springframework.session.web.http.HttpSessionIdResolver;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -31,12 +35,22 @@ public class SecurityConfig {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+                .sessionManagement(session -> {
+                    session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS);
+                    // Forzar configuración de cookies aquí
+                    session.sessionFixation().none();
+                })
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/login.html", "/login.css", "/img/**", "/api/login",
                             "/imagenes/**", "/Sector.html", "/api/**").permitAll();
                     auth.anyRequest().authenticated();
                 })
+                // AGREGAR ESTO: Configurar respuesta de headers
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.deny())
+                        .httpStrictTransportSecurity(hstsConfig -> hstsConfig.disable())
+
+                )
                 .build();
     }
 
@@ -55,14 +69,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    public ServletContextInitializer servletContextInitializer() {
-        return servletContext -> {
-            SessionCookieConfig sessionCookieConfig = servletContext.getSessionCookieConfig();
-            sessionCookieConfig.setSecure(false);  // IMPORTANTE: false para HTTP
-            sessionCookieConfig.setHttpOnly(true);
-            sessionCookieConfig.setName("JSESSIONID");
-            sessionCookieConfig.setPath("/");
-        };
+    @Primary
+    public HttpSessionIdResolver httpSessionIdResolver() {
+        CookieHttpSessionIdResolver resolver = new CookieHttpSessionIdResolver();
+        DefaultCookieSerializer cookieSerializer = new DefaultCookieSerializer();
+        cookieSerializer.setCookieName("JSESSIONID");
+        cookieSerializer.setCookiePath("/");
+        cookieSerializer.setUseSecureCookie(false);
+        cookieSerializer.setSameSite("Lax");
+        resolver.setCookieSerializer(cookieSerializer);
+        return resolver;
     }
 
     @Bean
