@@ -4,8 +4,6 @@ import jakarta.servlet.SessionCookieConfig;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -17,13 +15,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.session.MapSession;
-import org.springframework.session.MapSessionRepository;
-import org.springframework.session.SessionRepository;
-import org.springframework.session.web.http.CookieHttpSessionIdResolver;
-import org.springframework.session.web.http.CookieSerializer;
-import org.springframework.session.web.http.DefaultCookieSerializer;
-import org.springframework.session.web.http.HttpSessionIdResolver;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -64,21 +55,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Primary
-    public SessionRepository<MapSession> sessionRepository() {
-        return new MapSessionRepository(new ConcurrentHashMap<>());
-    }
-
-    @Bean
-    public HttpSessionIdResolver httpSessionIdResolver() {
-        CookieHttpSessionIdResolver resolver = new CookieHttpSessionIdResolver();
-        DefaultCookieSerializer cookieSerializer = new DefaultCookieSerializer();
-        cookieSerializer.setCookieName("JSESSIONID");
-        cookieSerializer.setCookiePath("/");
-        cookieSerializer.setUseSecureCookie(false); // Importante
-        cookieSerializer.setSameSite("Lax");
-        resolver.setCookieSerializer(cookieSerializer);
-        return resolver;
+    public ServletContextInitializer servletContextInitializer() {
+        return servletContext -> {
+            SessionCookieConfig sessionCookieConfig = servletContext.getSessionCookieConfig();
+            sessionCookieConfig.setHttpOnly(true);
+            sessionCookieConfig.setSecure(false);  // IMPORTANTE: false para HTTP
+            sessionCookieConfig.setName("JSESSIONID");
+            sessionCookieConfig.setPath("/");
+        };
     }
 
     @Bean
