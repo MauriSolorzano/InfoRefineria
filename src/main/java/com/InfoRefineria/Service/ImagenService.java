@@ -26,15 +26,21 @@ public class ImagenService {
 
     public String guardarImagenes(MultipartFile archivo, String sectorStr) throws IOException {
         if (archivo.isEmpty()){
-            throw new  IllegalArgumentException("El archivo no puede estar vacio");
+            throw new IllegalArgumentException("El archivo no puede estar vacio");
         }
         if (!tiposPermitidos.contains(archivo.getContentType())){
-            throw  new IllegalArgumentException("Tipo de archivo no permitido");
+            throw new IllegalArgumentException("Tipo de archivo no permitido");
         }
 
         Sector sector = Sector.valueOf(sectorStr.toUpperCase());
         String nombreArchivo = UUID.randomUUID() + "_" + archivo.getOriginalFilename();
-        Path rutaArchivo = directorioImagenes.resolve(nombreArchivo);
+
+        // CAMBIO 1: Crear directorio del sector si no existe
+        Path directorioSector = directorioImagenes.resolve(sectorStr.toUpperCase());
+        Files.createDirectories(directorioSector);
+
+        // CAMBIO 2: Guardar en la subcarpeta del sector
+        Path rutaArchivo = directorioSector.resolve(nombreArchivo);
         archivo.transferTo(rutaArchivo);
 
         Imagen imagen = new Imagen();
@@ -50,7 +56,8 @@ public class ImagenService {
             Sector sector = Sector.valueOf(sectorStr.toUpperCase());
             List<Imagen> imagenes = imagenRepository.findBySector(sector);
             return imagenes.stream()
-                    .map(img -> "/imagenes/" + img.getNombreArchivo())
+                    // CAMBIO 3: Incluir el sector en la ruta
+                    .map(img -> "/imagenes/" + sectorStr.toUpperCase() + "/" + img.getNombreArchivo())
                     .toList();
         } catch (IllegalArgumentException e){
             throw new IllegalArgumentException("Sector no valido:" + sectorStr);
@@ -66,7 +73,8 @@ public class ImagenService {
                         Map<String, Object> imageData = new HashMap<>();
                         imageData.put("id", img.getId());
                         imageData.put("nombreArchivo", img.getNombreArchivo());
-                        imageData.put("ruta", "/imagenes/" + img.getNombreArchivo());
+                        // CAMBIO 4: Incluir el sector en la ruta
+                        imageData.put("ruta", "/imagenes/" + sectorStr.toUpperCase() + "/" + img.getNombreArchivo());
                         imageData.put("sector", img.getSector());
                         return imageData;
                     })
@@ -76,14 +84,14 @@ public class ImagenService {
         }
     }
 
-
     public void deleteImageById(Long id){
         Imagen imagen = imagenRepository.findById(id)
                 .orElseThrow(()-> new ImagenNotFoundException("No se encontro la imagene con ID: " + id));
 
         try{
-            if (imagen.getNombreArchivo()!= null){
-                Path rutaArchivo = directorioImagenes.resolve(imagen.getNombreArchivo());
+            if (imagen.getNombreArchivo() != null){
+                // CAMBIO 5: Buscar en la subcarpeta del sector
+                Path rutaArchivo = directorioImagenes.resolve(imagen.getSector().toString()).resolve(imagen.getNombreArchivo());
                 Files.deleteIfExists(rutaArchivo);
             }
             imagenRepository.delete(imagen);
@@ -104,7 +112,8 @@ public class ImagenService {
 
             for (Imagen imagen : imagenes) {
                 try {
-                    Path rutaArchivo = Paths.get(imagen.getNombreArchivo());
+                    // CAMBIO 6: Eliminar desde la subcarpeta del sector
+                    Path rutaArchivo = directorioImagenes.resolve(sector.toString()).resolve(imagen.getNombreArchivo());
                     Files.deleteIfExists(rutaArchivo);
                 } catch (IOException e) {
                     System.err.println("Error al eliminar archivo físico: " + imagen.getNombreArchivo());
@@ -116,7 +125,7 @@ public class ImagenService {
         }
     }
 
-    // CLASE DE EXCEPCIÓN (agregar en un archivo separado o al final del mismo archivo)
+    // CLASE DE EXCEPCIÓN
     public class ImagenNotFoundException extends RuntimeException {
         public ImagenNotFoundException(String message) {
             super(message);
