@@ -1,10 +1,7 @@
 package com.InfoRefineria.Config;
 
-import jakarta.servlet.SessionCookieConfig;
-import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -16,15 +13,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.session.web.http.CookieHttpSessionIdResolver;
-import org.springframework.session.web.http.DefaultCookieSerializer;
-import org.springframework.session.web.http.HttpSessionIdResolver;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 @EnableWebSecurity

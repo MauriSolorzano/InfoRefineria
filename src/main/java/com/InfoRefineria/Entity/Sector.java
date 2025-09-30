@@ -2,8 +2,8 @@ package com.InfoRefineria.Entity;
 
 public enum Sector {
     ENVASE,
-    PRODUCCION,
+    PANELISTAS,
     CALIDAD,
-    MANTENIMIENTO
-
+    MANTENIMIENTO,
+    LEVADURA
 }
