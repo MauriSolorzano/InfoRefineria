@@ -4,6 +4,8 @@ import com.InfoRefineria.Entity.Imagen;
 import com.InfoRefineria.Entity.Sector;
 import com.InfoRefineria.Service.ImagenService;
 import com.InfoRefineria.Service.PdfImageExtractorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +22,14 @@ import java.util.Map;
 @RequestMapping("/api/imagenes")
 public class ImagenController {
 
-
     private final ImagenService imagenService;
-
     @Autowired
     private PdfImageExtractorService pdfImageExtractorService;
-
     public ImagenController(ImagenService imagenService){
         this.imagenService = imagenService;
     }
+
+    private static final Logger logger = LoggerFactory.getLogger(ImagenController.class);
 
     // Post para cargar imagenes PNG, JPEG
     @PostMapping
@@ -37,6 +38,9 @@ public class ImagenController {
             imagenService.guardarImagenes(archivo,sector);
             return ResponseEntity.ok("Se subio correctamente la imagen");
         }catch (Exception e){
+            logger.error("Error al subir imagen al sector {}: {}", sector, e.getMessage(), e);
+            e.printStackTrace();
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al subir la imagen: " + e.getMessage());
         }
