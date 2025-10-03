@@ -11,6 +11,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -53,10 +55,32 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails user = User.withUsername("admin")
-                .password("{noop}1234")
+                .password(passwordEncoder().encode("1234"))
                 .roles("ADMIN")
                 .build();
+        UserDetails user1 = User.withUsername("ggonzalez")
+                .password(passwordEncoder().encode("germang"))
+                .roles("ADMIN")
+                .build();
+        UserDetails user2 = User.withUsername("panelistas")
+                .password(passwordEncoder().encode("p1234"))
+                .roles("ADMIN")
+                .build();
+        UserDetails user3 = User.withUsername("envase")
+                .password(passwordEncoder().encode("env1234"))
+                .roles("ADMIN")
+                .build();
+        UserDetails user4 = User.withUsername("fusion")
+                .password(passwordEncoder().encode("f1234"))
+                .roles("ADMIN")
+                .build();
+
         return new InMemoryUserDetailsManager(user);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
