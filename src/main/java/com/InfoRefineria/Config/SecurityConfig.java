@@ -74,6 +74,10 @@ public class SecurityConfig {
                 .password(passwordEncoder().encode("f1234"))
                 .roles("ADMIN")
                 .build();
+        UserDetails user5 = User.withUsername("levadura")
+                .password(passwordEncoder().encode("leva1234"))
+                .roles("ADMIN")
+                .build();
 
         return new InMemoryUserDetailsManager(user);
     }
