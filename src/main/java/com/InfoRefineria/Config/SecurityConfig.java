@@ -79,7 +79,7 @@ public class SecurityConfig {
                 .roles("ADMIN")
                 .build();
 
-        return new InMemoryUserDetailsManager(user);
+        return new InMemoryUserDetailsManager(user, user1, user2, user3, user4, user5);
     }
 
     @Bean
