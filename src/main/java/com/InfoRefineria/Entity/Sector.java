@@ -5,5 +5,6 @@ public enum Sector {
     PANELISTAS,
     CALIDAD,
     MANTENIMIENTO,
-    LEVADURA
+    LEVADURA,
+    LEVADURA_CONTROL
 }
