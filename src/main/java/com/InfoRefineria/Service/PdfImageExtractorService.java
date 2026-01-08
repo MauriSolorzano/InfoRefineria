@@ -21,7 +21,7 @@ public class PdfImageExtractorService {
     @Autowired
     private ImagenService imagenService;
 
-    public List<String> extraerImagenesDePdf(MultipartFile pdfFile, String sector) throws IOException {
+    public List<String> extraerImagenesDePdf(MultipartFile pdfFile, String sector, String planta) throws IOException {
         List<String> imagenesGuardadas = new ArrayList<>();
 
         try (PDDocument document = PDDocument.load(pdfFile.getInputStream())) {
@@ -38,7 +38,7 @@ public class PdfImageExtractorService {
                 );
 
                 // Guardar usando el servicio existente
-                String rutaImagen = imagenService.guardarImagenes(imageFile, sector);
+                String rutaImagen = imagenService.guardarImagenes(imageFile, sector, planta);
                 imagenesGuardadas.add(rutaImagen);
             }
         }

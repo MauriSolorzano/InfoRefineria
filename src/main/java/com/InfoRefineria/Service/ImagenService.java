@@ -1,6 +1,7 @@
 package com.InfoRefineria.Service;
 
 import com.InfoRefineria.Entity.Imagen;
+import com.InfoRefineria.Entity.Planta;
 import com.InfoRefineria.Entity.Sector;
 import com.InfoRefineria.Repository.ImagenRepository;
 import org.springframework.stereotype.Service;
@@ -24,20 +25,25 @@ public class ImagenService {
         Files.createDirectories(directorioImagenes);
     }
 
-    public String guardarImagenes(MultipartFile archivo, String sectorStr) throws IOException {
+    public String guardarImagenes(MultipartFile archivo, String sectorStr, String plantaStr) throws IOException {
         if (archivo.isEmpty()){
             throw new IllegalArgumentException("El archivo no puede estar vacio");
         }
+
         if (!tiposPermitidos.contains(archivo.getContentType())){
             throw new IllegalArgumentException("Tipo de archivo no permitido");
         }
 
         Sector sector = Sector.valueOf(sectorStr.toUpperCase());
+        Planta planta = Planta.valueOf(plantaStr.toUpperCase().trim());
         String nombreArchivo = UUID.randomUUID() + "_" + archivo.getOriginalFilename();
 
         // CAMBIO 1: Crear directorio del sector si no existe
-        Path directorioSector = directorioImagenes.resolve(sectorStr.toUpperCase());
-        Files.createDirectories(directorioSector);
+        Path directorioPlanta = directorioImagenes.resolve(planta.name());
+        Path directorioSector = directorioPlanta.resolve(sectorStr.toUpperCase());
+        if (!Files.exists(directorioSector)) {
+            Files.createDirectories(directorioSector);
+        }
 
         // CAMBIO 2: Guardar en la subcarpeta del sector
         Path rutaArchivo = directorioSector.resolve(nombreArchivo);
@@ -46,6 +52,7 @@ public class ImagenService {
         Imagen imagen = new Imagen();
         imagen.setNombreArchivo(nombreArchivo);
         imagen.setSector(sector);
+        imagen.setPlanta(planta);
 
         imagenRepository.save(imagen);
         return nombreArchivo;
@@ -64,17 +71,21 @@ public class ImagenService {
         }
     }
 
-    public List<Map<String, Object>> obtenerImagenesCompletasPorSector(String sectorStr) {
+    public List<Map<String, Object>> obtenerImagenesCompletasPorSector(String sectorStr, String plantaStr) {
         try {
             Sector sector = Sector.valueOf(sectorStr.toUpperCase());
-            List<Imagen> imagenes = imagenRepository.findBySector(sector);
+            Planta planta = Planta.valueOf(plantaStr.toUpperCase());
+
+            List<Imagen> imagenes = imagenRepository.findBySectorAndPlanta(sector, planta);
             return imagenes.stream()
                     .map(img -> {
                         Map<String, Object> imageData = new HashMap<>();
                         imageData.put("id", img.getId());
                         imageData.put("nombreArchivo", img.getNombreArchivo());
-                        // CAMBIO 4: Incluir el sector en la ruta
-                        imageData.put("ruta", "/imagenes/" + sectorStr.toUpperCase() + "/" + img.getNombreArchivo());
+
+                        String ruta = "/imagenes/" + planta.name() + "/" + sector.name() + "/" + img.getNombreArchivo();
+
+                        imageData.put("ruta", ruta);
                         imageData.put("sector", img.getSector());
                         return imageData;
                     })

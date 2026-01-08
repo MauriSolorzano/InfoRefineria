@@ -33,9 +33,11 @@ public class ImagenController {
 
     // Post para cargar imagenes PNG, JPEG
     @PostMapping
-    public ResponseEntity<String> subirImagen(@RequestParam("imagen")MultipartFile archivo, @RequestParam("sector")String sector){
+    public ResponseEntity<String> subirImagen(@RequestParam("imagen")MultipartFile archivo,
+                                              @RequestParam("sector")String sector,
+                                              @RequestParam(value = "planta", required = false, defaultValue = "CORDOBA") String planta){
         try{
-            imagenService.guardarImagenes(archivo,sector);
+            imagenService.guardarImagenes(archivo,sector, planta);
             return ResponseEntity.ok("Se subio correctamente la imagen");
         }catch (Exception e){
             logger.error("Error al subir imagen al sector {}: {}", sector, e.getMessage(), e);
@@ -50,14 +52,15 @@ public class ImagenController {
     @PostMapping("/pdf")
     public ResponseEntity<Map<String, Object>> subirPDF(
             @RequestParam("pdf") MultipartFile archivo,
-            @RequestParam("sector") String sector){
+            @RequestParam("sector") String sector,
+            @RequestParam(value = "planta", required = false, defaultValue = "CORDOBA") String planta){
         try{
             // Try para validar que el archivo sea PDF
             if (!archivo.getContentType().equals("application/pdf")){
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "El archivo debe ser PDF"));
             }
-            List<String> imagenesExtraidas = pdfImageExtractorService.extraerImagenesDePdf(archivo, sector);
+            List<String> imagenesExtraidas = pdfImageExtractorService.extraerImagenesDePdf(archivo, sector, planta);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "PDF procesado correctamente");
@@ -73,9 +76,10 @@ public class ImagenController {
 
 
     @GetMapping("/{sector}")
-    public ResponseEntity<List<Map<String, Object>>> obtenerImagenesPorSector(@PathVariable String sector){
+    public ResponseEntity<List<Map<String, Object>>> obtenerImagenesPorSector(@PathVariable String sector,
+                                                                              @RequestParam(value = "planta", required = false, defaultValue = "CORDOBA") String planta){
         try {
-            List<Map<String, Object>> imagenes = imagenService.obtenerImagenesCompletasPorSector(sector);
+            List<Map<String, Object>> imagenes = imagenService.obtenerImagenesCompletasPorSector(sector, planta);
             return ResponseEntity.ok(imagenes);
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

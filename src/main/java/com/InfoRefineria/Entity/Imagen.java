@@ -10,14 +10,17 @@ public class Imagen {
     private String nombreArchivo;
     @Enumerated(EnumType.STRING)
     private Sector sector;
+    @Enumerated(EnumType.STRING)
+    private Planta planta;
 
     public Imagen() {
     }
 
-    public Imagen(Long id, String nombreArchivo, Sector sector) {
+    public Imagen(Long id, String nombreArchivo, Sector sector, Planta planta) {
         Id = id;
         this.nombreArchivo = nombreArchivo;
         this.sector = sector;
+        this.planta = planta;
     }
 
     public Long getId() {
@@ -42,5 +45,13 @@ public class Imagen {
 
     public void setSector(Sector sector) {
         this.sector = sector;
+    }
+
+    public Planta getPlanta() {
+        return planta;
+    }
+
+    public void setPlanta(Planta planta) {
+        this.planta = planta;
     }
 }

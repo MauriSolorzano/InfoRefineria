@@ -12,6 +12,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 //@CrossOrigin(origins = "http://localhost:5500", allowCredentials = "true")
 @RestController
 @RequestMapping("/api")
@@ -32,14 +35,25 @@ public class AuthController {
             );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
-
             HttpSession session = req.getSession(true);
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-            System.out.println("Usuario autenticado: " + auth.getName());
-            System.out.println("Session ID: " + session.getId());
+            String usuario = auth.getName();
+            String plantaAsignada = "CORDOBA";
+            String nombrePlanta = "Planta Cordoba";
 
-            return ResponseEntity.ok().build();
+            if (usuario.contains("vm") || usuario.equals("produccionvm")){
+                plantaAsignada = "VILLA_MERCEDES";
+                nombrePlanta = "Planta Villa Mercedes";
+            }
+
+            Map<String, String> responseBody = new HashMap<>();
+            responseBody.put("message", "Login Exitoso");
+            responseBody.put("usuario", usuario);
+            responseBody.put("planta", plantaAsignada);
+            responseBody.put("nombrePlanta", nombrePlanta);
+
+            return ResponseEntity.ok(responseBody);
         } catch (AuthenticationException e) {
             System.out.println("Error de autenticación: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

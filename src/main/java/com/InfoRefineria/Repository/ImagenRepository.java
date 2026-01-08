@@ -1,6 +1,7 @@
 package com.InfoRefineria.Repository;
 
 import com.InfoRefineria.Entity.Imagen;
+import com.InfoRefineria.Entity.Planta;
 import com.InfoRefineria.Entity.Sector;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +17,8 @@ public interface ImagenRepository extends JpaRepository<Imagen, Long> {
     @Modifying
     @Transactional
     void deleteBySector(Sector sector);
+
+    List<Imagen> findBySectorAndPlanta(Sector sector, Planta planta);
+
+    void deleteBySectorAndPlanta(Sector sector, Planta planta);
 }
