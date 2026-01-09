@@ -6,5 +6,6 @@ public enum Sector {
     CALIDAD,
     MANTENIMIENTO,
     LEVADURA,
-    LEVADURA_CONTROL
+    LEVADURA_CONTROL,
+    PRODUCCION
 }
