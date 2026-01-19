@@ -46,6 +46,10 @@ public class AuthController {
                 plantaAsignada = "VILLA_MERCEDES";
                 nombrePlanta = "Planta Villa Mercedes";
             }
+            if (usuario.contains("graba") || usuario.equals("admingraba")){
+                plantaAsignada = "GRABA";
+                nombrePlanta = "Planta Graba";
+            }
 
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("message", "Login Exitoso");

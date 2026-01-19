@@ -114,8 +114,12 @@ public class SecurityConfig {
                 .password(passwordEncoder().encode("plan$4253"))
                 .roles("ADMIN")
                 .build();
+        UserDetails user9 = User.withUsername("admingraba")
+                .password(passwordEncoder().encode("graba.1000"))
+                .roles("ADMIN")
+                .build();
 
-        return new InMemoryUserDetailsManager(user, user1, user2, user3, user4, user5, user6, user7, user8);
+        return new InMemoryUserDetailsManager(user, user1, user2, user3, user4, user5, user6, user7, user8, user9);
     }
 
     @Bean
