@@ -1,5 +1,10 @@
+# Fase de construcción
+FROM maven:3.8.5-openjdk-17 AS build
+COPY . .
+RUN mvn clean package -DskipTests
+
+# Fase de ejecución
 FROM openjdk:17-jdk-slim
-ARG JAR_FILE=target/Info-Refineria-0.0.1.jar
-COPY ${JAR_FILE} Info-Refineria.jar
+COPY --from=build /target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "Info-Refineria.jar"]
+ENTRYPOINT ["java","-jar","/app.jar"]
