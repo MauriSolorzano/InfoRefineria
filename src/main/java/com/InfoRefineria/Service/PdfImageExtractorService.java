@@ -20,7 +20,7 @@ public class PdfImageExtractorService {
 
     @Autowired
     private ImagenService imagenService;
-
+    /*
     public List<String> extraerImagenesDePdf(MultipartFile pdfFile, String sector, String planta) throws IOException {
         List<String> imagenesGuardadas = new ArrayList<>();
 
@@ -53,4 +53,6 @@ public class PdfImageExtractorService {
 
         return new MockMultipartFile(fileName, fileName, "image/png", imageBytes);
     }
+
+     */
 }

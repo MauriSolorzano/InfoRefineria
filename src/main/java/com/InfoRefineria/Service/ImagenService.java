@@ -1,145 +1,89 @@
 package com.InfoRefineria.Service;
 
 import com.InfoRefineria.Entity.Imagen;
-import com.InfoRefineria.Entity.Planta;
 import com.InfoRefineria.Entity.Sector;
 import com.InfoRefineria.Repository.ImagenRepository;
+import com.InfoRefineria.Repository.SectorRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
 public class ImagenService {
-
     private final ImagenRepository imagenRepository;
-    private final Path directorioImagenes = Paths.get("imagenes");
-    private final Set<String> tiposPermitidos = Set.of("image/jpeg", "image/png", "image/gif", "image/webp");
+    private final SectorRepository sectorRepository;
+    private final MinioStorageService storageService;
+    private final SectorNotificationService notificationService;
 
-    public ImagenService(ImagenRepository imagenRepository) throws Exception {
+    public ImagenService(ImagenRepository imagenRepository, SectorRepository sectorRepository, MinioStorageService storageService, SectorNotificationService notificationService) {
         this.imagenRepository = imagenRepository;
-        Files.createDirectories(directorioImagenes);
+        this.sectorRepository = sectorRepository;
+        this.storageService = storageService;
+        this.notificationService = notificationService;
     }
 
-    public String guardarImagenes(MultipartFile archivo, String sectorStr, String plantaStr) throws IOException {
-        if (archivo.isEmpty()){
-            throw new IllegalArgumentException("El archivo no puede estar vacio");
-        }
+    private static final Set<String> TIPOS_PERMITIDOS = Set.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"
+    );
 
-        if (!tiposPermitidos.contains(archivo.getContentType())){
+    public Imagen guardarImagen(MultipartFile archivo, String nombreSector, String nombrePlanta) throws Exception {
+        if (archivo.isEmpty())
+            throw new IllegalArgumentException("El archivo no puede estar vacío");
+        if (!TIPOS_PERMITIDOS.contains(archivo.getContentType()))
             throw new IllegalArgumentException("Tipo de archivo no permitido");
-        }
 
-        Sector sector = Sector.valueOf(sectorStr.toUpperCase());
-        Planta planta = Planta.valueOf(plantaStr.toUpperCase().trim());
-        String nombreArchivo = UUID.randomUUID() + "_" + archivo.getOriginalFilename();
+        // Buscar el sector en la BD
+        Sector sector = sectorRepository
+                .findByNombreAndPlantaNombre(nombreSector.toUpperCase(), nombrePlanta.toUpperCase())
+                .orElseThrow(() -> new IllegalArgumentException("Sector no encontrado: " + nombreSector));
 
-        // CAMBIO 1: Crear directorio del sector si no existe
-        Path directorioPlanta = directorioImagenes.resolve(planta.name());
-        Path directorioSector = directorioPlanta.resolve(sectorStr.toUpperCase());
-        if (!Files.exists(directorioSector)) {
-            Files.createDirectories(directorioSector);
-        }
+        // Subir a Supabase Storage
+        String urlPublica = storageService.subirArchivo(archivo, nombrePlanta, nombreSector);
 
-        // CAMBIO 2: Guardar en la subcarpeta del sector
-        Path rutaArchivo = directorioSector.resolve(nombreArchivo);
-        archivo.transferTo(rutaArchivo);
+        // Extraer el storagePath de la URL pública
+        String storagePath = nombrePlanta.toUpperCase() + "/" +
+                nombreSector.toUpperCase() + "/" +
+                urlPublica.substring(urlPublica.lastIndexOf("/") + 1);
 
+        // Guardar metadatos en la BD
         Imagen imagen = new Imagen();
-        imagen.setNombreArchivo(nombreArchivo);
         imagen.setSector(sector);
-        imagen.setPlanta(planta);
+        imagen.setNombreArchivo(archivo.getOriginalFilename());
+        imagen.setStoragePath(storagePath);
+        imagen.setUrlPublica(urlPublica);
+        imagen.setSubidaEn(LocalDateTime.now());
 
-        imagenRepository.save(imagen);
-        return nombreArchivo;
+        Imagen guardada = imagenRepository.save(imagen);
+
+        notificationService.notificarCambio(nombrePlanta, nombreSector);
+        return guardada;
     }
 
-    public List<String> obtenerRutasPorSector(String sectorStr) {
-        try {
-            Sector sector = Sector.valueOf(sectorStr.toUpperCase());
-            List<Imagen> imagenes = imagenRepository.findBySector(sector);
-            return imagenes.stream()
-                    // CAMBIO 3: Incluir el sector en la ruta
-                    .map(img -> "/imagenes/" + sectorStr.toUpperCase() + "/" + img.getNombreArchivo())
-                    .toList();
-        } catch (IllegalArgumentException e){
-            throw new IllegalArgumentException("Sector no valido:" + sectorStr);
-        }
+    public List<Imagen> obtenerImagenesPorSector(String nombreSector, String nombrePlanta) {
+        Sector sector = sectorRepository
+                .findByNombreAndPlantaNombre(nombreSector.toUpperCase(), nombrePlanta.toUpperCase())
+                .orElseThrow(() -> new IllegalArgumentException("Sector no encontrado"));
+
+        return imagenRepository.findBySectorIdOrderByOrdenAsc(sector.getId());
     }
 
-    public List<Map<String, Object>> obtenerImagenesCompletasPorSector(String sectorStr, String plantaStr) {
-        try {
-            Sector sector = Sector.valueOf(sectorStr.toUpperCase());
-            Planta planta = Planta.valueOf(plantaStr.toUpperCase());
-
-            List<Imagen> imagenes = imagenRepository.findBySectorAndPlanta(sector, planta);
-            return imagenes.stream()
-                    .map(img -> {
-                        Map<String, Object> imageData = new HashMap<>();
-                        imageData.put("id", img.getId());
-                        imageData.put("nombreArchivo", img.getNombreArchivo());
-
-                        String ruta = "/imagenes/" + planta.name() + "/" + sector.name() + "/" + img.getNombreArchivo();
-
-                        imageData.put("ruta", ruta);
-                        imageData.put("sector", img.getSector());
-                        return imageData;
-                    })
-                    .toList();
-        } catch (IllegalArgumentException e){
-            throw new IllegalArgumentException("Sector no valido:" + sectorStr);
-        }
-    }
-
-    public void deleteImageById(Long id){
+    public void eliminarImagenPorId(Long id) {
         Imagen imagen = imagenRepository.findById(id)
-                .orElseThrow(()-> new ImagenNotFoundException("No se encontro la imagene con ID: " + id));
+                .orElseThrow(() -> new ImagenNotFoundException("Imagen no encontrada: " + id));
+        String sector = imagen.getSector().getNombre();
+        String planta = imagen.getSector().getPlanta().getNombre();
 
-        try{
-            if (imagen.getNombreArchivo() != null){
-                // CAMBIO 5: Buscar en la subcarpeta del sector
-                Path rutaArchivo = directorioImagenes.resolve(imagen.getSector().toString()).resolve(imagen.getNombreArchivo());
-                Files.deleteIfExists(rutaArchivo);
-            }
-            imagenRepository.delete(imagen);
-        }catch (IOException e){
-            throw new RuntimeException("Error al eliminar el archivo fisico: " + e.getMessage(), e);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al eliminar la imagen: " + e.getMessage(), e);
-        }
+        storageService.eliminarArchivo(imagen.getStoragePath());
+        imagenRepository.delete(imagen);
+        notificationService.notificarCambio(planta, sector);
     }
 
-    public void deleteImageBySector(Sector sector){
-        try{
-            List<Imagen> imagenes = imagenRepository.findBySector(sector);
-
-            if (imagenes.isEmpty()){
-                throw new RuntimeException("No se encontraron imagenes en el sector: " + sector);
-            }
-
-            for (Imagen imagen : imagenes) {
-                try {
-                    // CAMBIO 6: Eliminar desde la subcarpeta del sector
-                    Path rutaArchivo = directorioImagenes.resolve(sector.toString()).resolve(imagen.getNombreArchivo());
-                    Files.deleteIfExists(rutaArchivo);
-                } catch (IOException e) {
-                    System.err.println("Error al eliminar archivo físico: " + imagen.getNombreArchivo());
-                }
-            }
-            imagenRepository.deleteBySector(sector);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al eliminar imagenes del sector: " + e.getMessage());
-        }
-    }
-
-    // CLASE DE EXCEPCIÓN
     public class ImagenNotFoundException extends RuntimeException {
-        public ImagenNotFoundException(String message) {
-            super(message);
-        }
+        public ImagenNotFoundException(String message) { super(message); }
     }
+
 }
+

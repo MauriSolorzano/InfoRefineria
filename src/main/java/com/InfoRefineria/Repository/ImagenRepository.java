@@ -12,13 +12,6 @@ import java.util.List;
 
 @Repository
 public interface ImagenRepository extends JpaRepository<Imagen, Long> {
-    List<Imagen> findBySector (Sector sector);
+    List<Imagen> findBySectorIdOrderByOrdenAsc(Long sectorId);
 
-    @Modifying
-    @Transactional
-    void deleteBySector(Sector sector);
-
-    List<Imagen> findBySectorAndPlanta(Sector sector, Planta planta);
-
-    void deleteBySectorAndPlanta(Sector sector, Planta planta);
 }

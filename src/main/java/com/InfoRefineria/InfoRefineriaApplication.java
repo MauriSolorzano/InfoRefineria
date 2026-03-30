@@ -3,11 +3,11 @@ package com.InfoRefineria;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+		org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+})
 public class InfoRefineriaApplication {
-
 	public static void main(String[] args) {
 		SpringApplication.run(InfoRefineriaApplication.class, args);
 	}
-
 }
