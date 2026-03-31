@@ -18,12 +18,17 @@ public class MinioStorageService {
     @Value("${minio.bucket}")
     private String bucket;
 
-    @Value("${minio.url}")
-    private String minioUrl;
+    // Esta sigue siendo la URL interna para que el backend suba archivos
+    private final String minioUrlInterna;
+
+    // NUEVA: Esta es la que usaremos para construir el link del navegador
+    @Value("${minio.url-publica}")
+    private String minioUrlPublica;
 
     public MinioStorageService(@Value("${minio.url}") String url,
                                @Value("${minio.access-key}") String accessKey,
                                @Value("${minio.secret-key}") String secretKey) {
+        this.minioUrlInterna = url; // Guardamos la URL de conexión
         this.minioClient = MinioClient.builder()
                 .endpoint(url)
                 .credentials(accessKey, secretKey)
@@ -46,8 +51,8 @@ public class MinioStorageService {
                         .build()
         );
 
-        // URL pública directa
-        return minioUrl + "/" + bucket + "/" + objectName;
+        // CAMBIO AQUÍ: Usamos minioUrlPublica para el link que va a la base de datos
+        return minioUrlPublica + "/" + bucket + "/" + objectName;
     }
 
     public void eliminarArchivo(String storagePath) {

@@ -43,10 +43,12 @@ public class ImagenService {
         // Subir a Supabase Storage
         String urlPublica = storageService.subirArchivo(archivo, nombrePlanta, nombreSector);
 
+        String plantaLimpia = nombrePlanta.toUpperCase().trim().replace(" ", "_");
+        String sectorLimpio = nombreSector.toUpperCase().trim().replace(" ", "_");
+        String nombreArchivoConUUID = urlPublica.substring(urlPublica.lastIndexOf("/") + 1);
+
         // Extraer el storagePath de la URL pública
-        String storagePath = nombrePlanta.toUpperCase() + "/" +
-                nombreSector.toUpperCase() + "/" +
-                urlPublica.substring(urlPublica.lastIndexOf("/") + 1);
+        String storagePath = plantaLimpia + "/" + sectorLimpio + "/" + nombreArchivoConUUID;
 
         // Guardar metadatos en la BD
         Imagen imagen = new Imagen();
