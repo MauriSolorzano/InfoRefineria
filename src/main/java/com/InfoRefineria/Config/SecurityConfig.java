@@ -79,7 +79,8 @@ public class SecurityConfig {
                 "http://10.0.0.50:3000",
                 "http://localhost:3000",
                 "http://127.0.0.1:5500",
-                "http://10.0.0.50"
+                "http://10.0.0.50",
+                "https://10.0.0.50"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type",

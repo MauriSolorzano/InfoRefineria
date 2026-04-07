@@ -34,11 +34,18 @@ public class ImagenController {
             @RequestParam("sector") String sector,
             @RequestParam(value = "planta", defaultValue = "TODAS") String planta) {
         try {
-            Imagen imagen = imagenService.guardarImagen(archivo, sector, planta);
+            List<Imagen> imagenes = imagenService.guardarImagen(archivo,sector,planta);
+            if (imagenes.size() == 1) {
+                Imagen img = imagenes.get(0);
+                return ResponseEntity.ok(Map.of(
+                        "message", "Imagen subida correctamente",
+                        "urlPublica", img.getUrlPublica(),
+                        "id", img.getId()
+                ));
+            }
             return ResponseEntity.ok(Map.of(
-                    "message", "Imagen subida correctamente",
-                    "urlPublica", imagen.getUrlPublica(),
-                    "id", imagen.getId()
+                    "message", "PDF procesado: " + imagenes.size() + " páginas subidas",
+                    "cantidad", imagenes.size()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -72,4 +79,6 @@ public class ImagenController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+
 }
