@@ -130,6 +130,5 @@ public class ImagenService {
     public class ImagenNotFoundException extends RuntimeException {
         public ImagenNotFoundException(String message) { super(message); }
     }
-
 }
 
