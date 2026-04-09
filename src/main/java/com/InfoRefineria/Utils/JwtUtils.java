@@ -36,13 +36,19 @@ public class JwtUtils {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining());
 
+        long tiempoExpiracion = 28800000L;
+
+        if ("visor".equalsIgnoreCase(username)) {
+            tiempoExpiracion = 315360000000L;
+        }
+
         // Generacion de token
         String jwToken = JWT.create()
                 .withIssuer(this.userGenerator)
                 .withSubject(username)
                 .withClaim("authorities", authorities)
                 .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis()+ 28800000))
+                .withExpiresAt(new Date(System.currentTimeMillis() + tiempoExpiracion))
                 .withJWTId(UUID.randomUUID().toString())
                 .withNotBefore(new Date(System.currentTimeMillis()))
                 .sign(algorithm);
