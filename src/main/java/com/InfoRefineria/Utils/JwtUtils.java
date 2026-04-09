@@ -31,15 +31,18 @@ public class JwtUtils {
 
         String username = authentication.getName();
 
+        // IMPORTANTE: La coma dentro del joining es vital para separar multiples roles
         String authorities = authentication.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining());
+                .collect(Collectors.joining(","));
 
+        // Tiempo base de 8 horas
         long tiempoExpiracion = 28800000L;
 
-        if ("visor".equalsIgnoreCase(username)) {
-            tiempoExpiracion = 315360000000L;
+        // Validamos si el usuario tiene el rol asignado, sin importar su nombre
+        if (authorities.contains("ROLE_VISOR")) {
+            tiempoExpiracion = 315360000000L; // 10 años para todas las pantallas
         }
 
         // Generacion de token
