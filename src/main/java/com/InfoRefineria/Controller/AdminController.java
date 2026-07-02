@@ -32,9 +32,9 @@ public class AdminController {
         }
     }
 
-    @PutMapping("/plantas/{id}")
+    @RequestMapping(value = "/plantas/{id}", method = {RequestMethod.PUT, RequestMethod.POST})
     public ResponseEntity<?> actualizarPlanta(@PathVariable Long id,
-                                              @RequestBody Map<String, Object> body) {
+                                               @RequestBody Map<String, Object> body) {
         try {
             Planta planta = adminService.actualizarPlanta(id, body);
             return ResponseEntity.ok(planta);
@@ -58,9 +58,9 @@ public class AdminController {
         }
     }
 
-    @PutMapping("/sectores/{id}")
+    @RequestMapping(value = "/sectores/{id}", method = {RequestMethod.PUT, RequestMethod.POST})
     public ResponseEntity<?> actualizarSector(@PathVariable Long id,
-                                              @RequestBody Map<String, Object> body) {
+                                               @RequestBody Map<String, Object> body) {
         try {
             Sector sector = adminService.actualizarSector(id, body);
             return ResponseEntity.ok(sector);
@@ -85,9 +85,9 @@ public class AdminController {
         }
     }
 
-    @PutMapping("/usuarios/{id}")
+    @RequestMapping(value = "/usuarios/{id}", method = {RequestMethod.PUT, RequestMethod.POST})
     public ResponseEntity<?> actualizarUsuario(@PathVariable Long id,
-                                               @RequestBody Map<String, Object> body) {
+                                                @RequestBody Map<String, Object> body) {
         try {
             Usuario usuario = adminService.actualizarUsuario(id, body);
             return ResponseEntity.ok(usuario);
