@@ -100,7 +100,7 @@ public class AdminService {
         if (rol == null || rol.isBlank())
             throw new IllegalArgumentException("El rol es obligatorio");
 
-        if (usuarioRepository.findByUsernameAndActivoTrue(username).isPresent())
+        if (usuarioRepository.findByUsername(username).isPresent())
             throw new IllegalArgumentException("El usuario ya existe");
 
         Usuario usuario = new Usuario();
@@ -130,6 +130,18 @@ public class AdminService {
     public Usuario actualizarUsuario(Long id, Map<String, Object> body) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        if (body.containsKey("username")) {
+            String username = body.get("username") != null ? body.get("username").toString().trim() : "";
+            if (username.isBlank())
+                throw new IllegalArgumentException("El username es obligatorio");
+            boolean existeOtroUsuario = usuarioRepository.findByUsername(username)
+                    .filter(usuarioExistente -> !usuarioExistente.getId().equals(id))
+                    .isPresent();
+            if (existeOtroUsuario)
+                throw new IllegalArgumentException("El usuario ya existe");
+            usuario.setUsername(username);
+        }
 
         if (body.containsKey("password") && body.get("password") != null && !body.get("password").toString().isBlank())
             usuario.setPasswordHash(passwordEncoder.encode(body.get("password").toString()));
