@@ -178,7 +178,7 @@ public class AdminService {
     }
 
     private boolean usaSectores(String rol) {
-        return "VISOR".equals(rol);
+        return "VISOR".equals(rol) || "ADMIN_PLANTA".equals(rol);
     }
 
     private Long obtenerPlantaIdObligatoria(Object plantaId) {
