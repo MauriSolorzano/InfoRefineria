@@ -52,7 +52,9 @@ public class ImagenService {
         }
 
         // ── Si es imagen normal, flujo original ──
-        return List.of(guardarArchivoSimple(archivo, sector, nombreSector, nombrePlanta));
+        Imagen imagen = guardarArchivoSimple(archivo, sector, nombreSector, nombrePlanta);
+        notificationService.notificarCambio(nombrePlanta, nombreSector);
+        return List.of(imagen);
     }
 
     private List<Imagen> guardarPaginasPDF(MultipartFile archivo, Sector sector,
@@ -113,7 +115,7 @@ public class ImagenService {
                 .findByNombreAndPlantaNombre(nombreSector.toUpperCase(), nombrePlanta.toUpperCase())
                 .orElseThrow(() -> new IllegalArgumentException("Sector no encontrado"));
 
-        return imagenRepository.findBySectorIdOrderByOrdenAsc(sector.getId());
+        return imagenRepository.findBySectorIdOrderByOrdenAscSubidaEnAscIdAsc(sector.getId());
     }
 
     public void eliminarImagenPorId(Long id) {

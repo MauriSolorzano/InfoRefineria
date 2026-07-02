@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -87,62 +88,102 @@ public class AdminService {
         return usuarioRepository.findAll();
     }
 
-    @SuppressWarnings("unchecked")
     public Usuario crearUsuario(Map<String, Object> body) {
         String username = (String) body.get("username");
+        String password = (String) body.get("password");
+        String rol = (String) body.get("rol");
+
+        if (username == null || username.isBlank())
+            throw new IllegalArgumentException("El username es obligatorio");
+        if (password == null || password.isBlank())
+            throw new IllegalArgumentException("La contraseña es obligatoria");
+        if (rol == null || rol.isBlank())
+            throw new IllegalArgumentException("El rol es obligatorio");
+
         if (usuarioRepository.findByUsernameAndActivoTrue(username).isPresent())
             throw new IllegalArgumentException("El usuario ya existe");
 
         Usuario usuario = new Usuario();
         usuario.setUsername(username);
-        usuario.setPasswordHash(passwordEncoder.encode((String) body.get("password")));
-        usuario.setRol((String) body.get("rol"));
+        usuario.setPasswordHash(passwordEncoder.encode(password));
+        usuario.setRol(rol);
         usuario.setActivo(true);
 
-        // Asignar planta si no es SUPERADMIN
-        if (body.containsKey("plantaId") && body.get("plantaId") != null) {
-            Long plantaId = Long.parseLong(body.get("plantaId").toString());
-            plantaRepository.findById(plantaId).ifPresent(usuario::setPlanta);
+        if (usaPlanta(rol)) {
+            Long plantaId = obtenerPlantaIdObligatoria(body.get("plantaId"));
+            Planta planta = plantaRepository.findById(plantaId)
+                    .orElseThrow(() -> new IllegalArgumentException("Planta no encontrada"));
+            usuario.setPlanta(planta);
+        } else {
+            usuario.setPlanta(null);
         }
 
-        // Asignar sectores si es ADMIN_PLANTA
-        if (body.containsKey("sectorIds") && body.get("sectorIds") != null) {
-            List<Integer> sectorIds = (List<Integer>) body.get("sectorIds");
-            List<Sector> sectores = sectorIds.stream()
-                    .map(sId -> sectorRepository.findById(Long.valueOf(sId)).orElseThrow())
-                    .toList();
-            usuario.setSectores(sectores);
+        if (usaSectores(rol)) {
+            usuario.setSectores(obtenerSectores(body.get("sectorIds")));
+        } else {
+            usuario.setSectores(new ArrayList<>());
         }
 
         return usuarioRepository.save(usuario);
     }
 
-    @SuppressWarnings("unchecked")
     public Usuario actualizarUsuario(Long id, Map<String, Object> body) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-        if (body.containsKey("password") && body.get("password") != null)
-            usuario.setPasswordHash(passwordEncoder.encode((String) body.get("password")));
+        if (body.containsKey("password") && body.get("password") != null && !body.get("password").toString().isBlank())
+            usuario.setPasswordHash(passwordEncoder.encode(body.get("password").toString()));
         if (body.containsKey("activo"))
             usuario.setActivo((Boolean) body.get("activo"));
-        if (body.containsKey("rol"))
-            usuario.setRol((String) body.get("rol"));
 
-        if (body.containsKey("plantaId") && body.get("plantaId") != null) {
-            Long plantaId = Long.parseLong(body.get("plantaId").toString());
-            plantaRepository.findById(plantaId).ifPresent(usuario::setPlanta);
+        String rol = body.containsKey("rol") ? (String) body.get("rol") : usuario.getRol();
+        if (rol == null || rol.isBlank())
+            throw new IllegalArgumentException("El rol es obligatorio");
+        usuario.setRol(rol);
+
+        if (!usaPlanta(rol)) {
+            usuario.setPlanta(null);
+        } else if (body.containsKey("plantaId")) {
+            Long plantaId = obtenerPlantaIdObligatoria(body.get("plantaId"));
+            Planta planta = plantaRepository.findById(plantaId)
+                    .orElseThrow(() -> new IllegalArgumentException("Planta no encontrada"));
+            usuario.setPlanta(planta);
         }
 
-        if (body.containsKey("sectorIds") && body.get("sectorIds") != null) {
-            List<Integer> sectorIds = (List<Integer>) body.get("sectorIds");
-            List<Sector> sectores = sectorIds.stream()
-                    .map(sId -> sectorRepository.findById(Long.valueOf(sId)).orElseThrow())
-                    .toList();
-            usuario.setSectores(sectores);
+        if (usaSectores(rol)) {
+            if (body.containsKey("sectorIds")) {
+                usuario.setSectores(obtenerSectores(body.get("sectorIds")));
+            }
+        } else if (body.containsKey("rol") || body.containsKey("sectorIds")) {
+            usuario.setSectores(new ArrayList<>());
         }
 
         return usuarioRepository.save(usuario);
+    }
+
+    private boolean usaPlanta(String rol) {
+        return !"SUPERADMIN".equals(rol);
+    }
+
+    private boolean usaSectores(String rol) {
+        return "VISOR".equals(rol);
+    }
+
+    private Long obtenerPlantaIdObligatoria(Object plantaId) {
+        if (plantaId == null || plantaId.toString().isBlank())
+            throw new IllegalArgumentException("La planta es obligatoria");
+        return Long.parseLong(plantaId.toString());
+    }
+
+    private List<Sector> obtenerSectores(Object rawSectorIds) {
+        if (!(rawSectorIds instanceof List<?> sectorIds) || sectorIds.isEmpty())
+            throw new IllegalArgumentException("Seleccioná al menos un sector");
+
+        return sectorIds.stream()
+                .map(sectorId -> Long.parseLong(sectorId.toString()))
+                .map(sectorId -> sectorRepository.findById(sectorId)
+                        .orElseThrow(() -> new IllegalArgumentException("Sector no encontrado: " + sectorId)))
+                .toList();
     }
 
 
