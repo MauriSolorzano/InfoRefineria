@@ -51,7 +51,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     auth.requestMatchers("/ws/**").permitAll();
-                    auth.requestMatchers("/api/admin/**").hasRole("SUPERADMIN");
+                    auth.requestMatchers("/api/admin/**").authenticated();
                     auth.requestMatchers("/api/auth", "/api/plantas/*/sectores", "/api/plantas/**",
                             "/login.html", "/login.css", "/img/**").permitAll();
                     auth.anyRequest().authenticated();
