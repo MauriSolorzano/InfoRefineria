@@ -52,6 +52,7 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     auth.requestMatchers("/ws/**").permitAll();
                     auth.requestMatchers("/api/admin/**").permitAll();
+                    auth.requestMatchers("/api/admin-actions/**").permitAll();
                     auth.requestMatchers("/api/auth", "/api/plantas/*/sectores", "/api/plantas/**",
                             "/login.html", "/login.css", "/img/**").permitAll();
                     auth.anyRequest().authenticated();

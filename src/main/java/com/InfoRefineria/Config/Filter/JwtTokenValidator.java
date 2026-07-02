@@ -30,7 +30,8 @@ public class JwtTokenValidator extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/api/admin/");
+        String uri = request.getRequestURI();
+        return uri.startsWith("/api/admin/") || uri.startsWith("/api/admin-actions/");
     }
 
 
